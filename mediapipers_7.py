@@ -2,6 +2,9 @@ import cv2  # Import the OpenCV library for image processing
 import mediapipe as mp  # Import the Mediapipe library for hand tracking
 import pyautogui  # Import the PyAutoGUI library for controlling the mouse
 
+# set pyautogui.FAILSAFE as false
+pyautogui.FAILSAFE = False
+
 cap = cv2.VideoCapture(0)  # Open the default camera
 hand_detector = mp.solutions.hands.Hands()  # Create a hand tracking object
 drawing_utils = mp.solutions.drawing_utils  # Utility functions for drawing landmarks
@@ -10,6 +13,7 @@ index_x, index_y = 0, 0  # Initialize variables for storing index finger positio
 middle_x, middle_y = 0, 0  # Initialize variables for storing middle finger position
 thumb_x, thumb_y = 0, 0  # Initialize variables for storing thumb position
 pinky_x, pinky_y = 0, 0  # Initialize variables for storing pinky finger position
+middle_base_x, middle_base_y = 0, 0 
 
 left_click_overlay = False  # Flag for indicating left click overlay
 right_click_overlay = False  # Flag for indicating right click overlay
@@ -37,10 +41,12 @@ while True:
             wrist_x = int(wrist_landmark.x * frame_width)  # Calculate the wrist x-coordinate
             wrist_y = int(wrist_landmark.y * frame_height)  # Calculate the wrist y-coordinate
 
-            hand_size = int(abs(index_x - wrist_x) + abs(index_y - wrist_y))  # Calculate hand size
+            constant = 1000
+            hand_size = max(constant - int(abs(middle_base_x - wrist_x) + abs(middle_base_y - wrist_y)), 20)  # Calculate hand size
             circle_radius = max(int(hand_size * 0.09), 20)  # Calculate circle radius for visualization
             click_collision_radius = max(int(hand_size * 0.12), 25)  # Calculate click collision radius
 
+            print(hand_size)
             for id, landmark in enumerate(landmarks):
                 x = int(landmark.x * frame_width)  # Calculate x-coordinate of the landmark
                 y = int(landmark.y * frame_height)  # Calculate y-coordinate of the landmark
@@ -64,6 +70,10 @@ while True:
                     cv2.circle(img=frame, center=(x, y), radius=circle_radius, color=(0, 255, 0))  # Draw circle for pinky finger
                     pinky_x = screen_width / frame_width * x  # Convert pinky finger x-coordinate to screen coordinates
                     pinky_y = screen_height / frame_height * y  # Convert pinky finger y-coordinate to screen coordinates
+
+                elif id == 9:
+                    middle_base_x = screen_width / frame_width * x  # Convert pinky finger x-coordinate to screen coordinates
+                    middle_base_y = screen_height / frame_height * y  # Convert pinky finger y-coordinate to screen coordinates
 
             if abs(index_x - thumb_x) < click_collision_radius and abs(index_y - thumb_y) < click_collision_radius:
                 if not left_button_held:
